@@ -1,0 +1,12 @@
+[package]
+authors = ["Ryan Havar <rhavar@protonmail.com>"]
+name = "rustoid"
+version = "0.1.0"
+
+[dependencies]
+find_folder = "0.3.0"
+gfx = "0.11.0"
+gfx_device_gl = "0.10.0"
+nalgebra = "0.8.2"
+piston2d-gfx_graphics = "0.28.0"
+piston_window = "0.47.0"
