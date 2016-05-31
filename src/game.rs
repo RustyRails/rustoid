@@ -62,7 +62,7 @@ impl <T : character::CharacterCache> Game <T  > {
             //rectangle(red, square, center.rot_rad(self.rotation).trans(-50.0, -50.0), graphics);
             let transform = c.transform.trans(10.0, 10.0);
 
-            text(red, 12, &format!("loc: {}", self.player.loc), &mut self.glyphs, transform, graphics)
+            text(red, 12, &format!("boosting: {:?}", self.player.boosting), &mut self.glyphs, transform, graphics)
 
         });
     }

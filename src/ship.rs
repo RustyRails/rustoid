@@ -15,10 +15,12 @@ use na::{ Vector2, Point2 };
 pub type Vec2 = na::Vector2<f64>;
 pub type Pnt2 = Point2<f64>;
 
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum ShipTurn {
     None, Left, Right
 }
 
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum ShipThrust {
     None, Reverse, Engaged
 }
@@ -32,7 +34,8 @@ pub struct Ship {
     exhausts: Vec<Texture<Resources>>,
     pub boosting: bool,
     pub turning: ShipTurn,
-    pub thrusting: ShipThrust
+    pub thrusting: ShipThrust,
+    elapsed: f64
 }
 
 
@@ -46,14 +49,17 @@ impl Ship {
             exhausts: get_ship_exhausts(w),
             boosting: false,
             turning: ShipTurn::None,
-            thrusting: ShipThrust::None
+            thrusting: ShipThrust::None,
+            elapsed: 0.0
         }
     }
 
     pub fn on_update(&mut self, dt: f64) {
+        self.elapsed += dt;
+
         let mult = if self.boosting { 2.0 } else { 1.0 };
 
-        self.rot += dt * match self.turning {
+        self.rot += 100.0 * dt * match self.turning {
             ShipTurn::None => 0.0,
             ShipTurn::Left => -0.01 * mult,
             ShipTurn::Right => 0.01 * mult
@@ -64,6 +70,8 @@ impl Ship {
             ShipThrust::Engaged => Vec2::new(self.rot.cos(), self.rot.sin()) * mult,
             ShipThrust::Reverse => Vec2::new(self.rot.cos(), self.rot.sin()) * -mult,
         };
+
+        self.loc += self.vel;
 
     }
 
@@ -78,24 +86,37 @@ impl Ship {
     }
 
     pub fn render(&self, g: &mut GfxGraphics<Resources, CommandBuffer>, view: math::Matrix2d) {
-        let square = rectangle::square(0.0, 0.0, 100.0);
-        let red = [1.0, 0.0, 0.0, 1.0];
 
-        match self.frames.get(self.get_curr_frame()) {
-            Some(frame) => {
-                let (x, y) = frame.get_size();
-                let (x, y) = ((x as f64) / -2.0, (y as f64) / -2.0);
 
-                image(frame, view
-                    .trans(self.loc.x, self.loc.y)
-                    .rot_rad(self.rot)
-                    .trans(x, y)
-                    , g);
+        let frame = self.frames.get(self.get_curr_frame()).expect("Expecting a frame");
+        let (x, y) = frame.get_size();
+        let (x, y) = ((x as f64) / -2.0, (y as f64) / -2.0);
 
-                //rectangle(red, rectangle::square())
-            }
-            _ => {}
+
+        if self.thrusting == ShipThrust::Engaged {
+            let exhaustFrame: usize = ((self.elapsed * 6.0) as usize) % 5;
+
+            let exhaust = self.exhausts.get(exhaustFrame).expect("expecting an exhaust");
+
+            image(exhaust, view
+                .trans(self.loc.x, self.loc.y)
+                .rot_rad(self.rot)
+                .trans(if self.boosting { -28.0 } else { -18.0 }, 0.0)
+                .trans(x, y)
+                , g);
         }
+
+
+
+
+        image(frame, view
+            .trans(self.loc.x, self.loc.y)
+            .rot_rad(self.rot)
+            .trans(x, y)
+            , g);
+
+
+
     }
 
 }
@@ -122,7 +143,7 @@ fn get_ship_exhausts(w: &mut PistonWindow) -> Vec<Texture<Resources>> {
     let assets = find_folder::Search::ParentsThenKids(3, 3).for_folder("assets").unwrap();
 
     vec!["01", "02", "03", "04", "05"].iter().map(|x| {
-        let spritename = format!("Player/exhaust_{}.png", x);
+        let spritename = format!("FX/exhaust_{}.png", x);
         let ship_sprite = assets.join(spritename);
         Texture::from_path(
                 &mut w.factory,
