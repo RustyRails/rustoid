@@ -21,7 +21,9 @@ fn main() {
     let mut window: PistonWindow = WindowSettings::new("Rustoid!", (640, 480))
         .exit_on_esc(true)
         .build()
-        .unwrap_or_else(|e| { panic!("Failed to build PistonWindow: {}", e) });
+        .unwrap_or_else(|e| { panic!("Failed to build PistonWindow: {}", e) })
+        ;
+
 
     let assets = find_folder::Search::ParentsThenKids(3, 3).for_folder("assets").unwrap();
 

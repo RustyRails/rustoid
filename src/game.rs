@@ -5,6 +5,9 @@ extern crate gfx_device_gl;
 use piston_window::*;
 
 
+use self::gfx_device_gl::{Resources, CommandBuffer};
+
+
 
 use object::Object;
 
@@ -20,6 +23,9 @@ pub struct Game<T: character::CharacterCache> {
     glyphs: T
 }
 
+use std;
+
+
 impl <T : character::CharacterCache> Game <T  > {
     pub fn new(w: &mut PistonWindow, g: T) -> Game<T> {
 
@@ -33,19 +39,25 @@ impl <T : character::CharacterCache> Game <T  > {
                 .unwrap();
 
         let mut p = Object::new();
-        p.set_sprite(ship_sprite);
+
+        let sprites = get_ship_assets(w);
+        p.set_sprites(sprites);
 
         Game { player: p, up_d: false, down_d: false, left_d: false, right_d: false, glyphs: g, sprint: false }
     }
+
+
+
+
     pub fn on_update(&mut self, upd: UpdateArgs) {
 
         let acceleration = if self.sprint { 2.0 } else { 1.0 };
 
         if self.up_d {
-            self.player.vel += Vec2::new(self.player.rot.sin(), -self.player.rot.cos()) * acceleration;
+            self.player.vel += Vec2::new(self.player.rot.cos(), self.player.rot.sin()) * acceleration;
         }
         if self.down_d {
-            self.player.vel -= Vec2::new(self.player.rot.sin(), -self.player.rot.cos()) * acceleration;
+            self.player.vel -= Vec2::new(self.player.rot.cos(), self.player.rot.sin()) * acceleration;
         }
         if self.left_d {
             self.player.rot -= 0.01 * acceleration;
@@ -91,49 +103,95 @@ impl <T : character::CharacterCache> Game <T  > {
 
         });
     }
+    fn dir_changed(&mut self) {
+        self.player.currSprite = match (self.left_d, self.right_d, self.sprint) {
+            (true, false, true) => 0,
+            (true, false, false) => 1,
+            (true, true, _) => 2,
+            (false, false, _) => 2,
+            (false, true, false) => 3,
+            (false, true, true) => 4
+        }
+    }
+
     pub fn on_input(&mut self, inp: Input) {
-        match inp {
+        let did_change = match inp {
             Input::Press(but) => {
                 match but {
                     Button::Keyboard(Key::Up) => {
                         self.up_d = true;
-                    }
+                        true
+                    },
                     Button::Keyboard(Key::Down) => {
                         self.down_d = true;
-                    }
+                        true
+                    },
                     Button::Keyboard(Key::Left) => {
                         self.left_d = true;
-                    }
+                        true
+                    },
                     Button::Keyboard(Key::Right) => {
                         self.right_d = true;
-                    }
+                        true
+                    },
                     Button::Keyboard(Key::LShift) => {
                         self.sprint = true;
-                    }
-                    _ => {}
+                        true
+                    },
+                    _ => false
                 }
             }
             Input::Release(but) => {
                 match but {
                     Button::Keyboard(Key::Up) => {
                         self.up_d = false;
+                        true
                     }
                     Button::Keyboard(Key::Down) => {
                         self.down_d = false;
+                        true
                     }
                     Button::Keyboard(Key::Left) => {
                         self.left_d = false;
+                        true
                     }
                     Button::Keyboard(Key::Right) => {
                         self.right_d = false;
+                        true
                     }
                     Button::Keyboard(Key::LShift) => {
                         self.sprint = false;
+                        true
                     }
-                    _ => {}
+                    _ => false
                 }
             }
-            _ => {}
+            _ => false
+        };
+
+        if did_change {
+            self.dir_changed();
         }
+
     }
+}
+
+
+
+fn get_ship_assets(w: &mut PistonWindow) -> Vec<Texture<Resources>> {
+    let assets = find_folder::Search::ParentsThenKids(3, 3).for_folder("assets").unwrap();
+
+
+    vec!["l1", "l2", "m", "r1", "r2"].iter().map(|x| {
+        let spritename = format!("Player/player_b_{}.png", x);
+        //println!("Trying with {}", spritename);
+        let ship_sprite = assets.join(spritename);
+        Texture::from_path(
+                &mut w.factory,
+                &ship_sprite,
+                Flip::None,
+                &TextureSettings::new())
+                .unwrap()
+    }).collect()
+
 }

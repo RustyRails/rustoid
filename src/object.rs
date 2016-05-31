@@ -19,13 +19,14 @@ pub struct Object {
     pub loc: Pnt2,
     pub rot: f64,
     pub vel: Vec2,
-    sprite: Option<Texture<Resources>>
+    pub sprites: Vec<Texture<Resources>>,
+    pub currSprite: usize
 }
 
 #[allow(dead_code)]
 impl Object {
     pub fn new() -> Object {
-        Object { loc: Pnt2::new(0.0, 0.0), rot: 0.0, vel: Vec2::new(0.0, 0.0), sprite: None }
+        Object { loc: Pnt2::new(0.0, 0.0), rot: 0.0, vel: Vec2::new(0.0, 0.0), sprites: Vec::new(), currSprite: 0 }
     }
 
     pub fn fwd(&mut self, d: f64) {
@@ -41,12 +42,8 @@ impl Object {
         let square = rectangle::square(0.0, 0.0, 100.0);
         let red = [1.0, 0.0, 0.0, 1.0];
 
-        match self.sprite {
-            None => {
-                rectangle(red, square, view.trans(self.loc.x, self.loc.y), g); // We translate the rectangle slightly so that it's centered; otherwise only the top left corner would be centered
-
-            }
-            Some(ref sprite) => {
+        match self.sprites.get(self.currSprite) {
+            Some(sprite) => {
                 let (x, y) = sprite.get_size();
                 let (x, y) = ((x as f64) / -2.0, (y as f64) / -2.0);
 
@@ -57,12 +54,12 @@ impl Object {
                     , g);
 
                 //rectangle(red, rectangle::square())
-
             }
+            _ => {}
         }
     }
 
-    pub fn set_sprite(&mut self, sprite: Texture<Resources>) {
-        self.sprite = Some(sprite);
+    pub fn set_sprites(&mut self, sprites: Vec<Texture<Resources>>) {
+        self.sprites = sprites;
     }
 }
