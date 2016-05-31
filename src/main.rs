@@ -5,10 +5,10 @@ extern crate find_folder;
 
 use piston_window::*;
 
-mod object;
+mod ship;
 mod game;
 
-use object::Object;
+use ship::Ship;
 use game::Game;
 
 
